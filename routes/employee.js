@@ -1,6 +1,6 @@
 const express = require('express');
 const QRCode = require('qrcode');
-const db = require('../db');
+const db = require('../db-postgres');
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ router.post('/add', requireAuth, async (req, res) => {
     }
     
     // Check if email already exists
-    const existingEmails = await db.query('SELECT email FROM employees WHERE email = ?', [email]);
+    const existingEmails = await db.query('SELECT email FROM employees WHERE email = $1', [email]);
     if (existingEmails.length > 0) {
       return res.status(400).json({ error: 'Email already exists' });
     }
@@ -51,13 +51,13 @@ router.post('/add', requireAuth, async (req, res) => {
     try {
       // Try inserting with position and department if columns exist
       result = await db.execute(
-        'INSERT INTO employees (admin_id, name, email, phone, position, department, qr_code) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO employees (admin_id, name, email, phone, position, department, qr_code) VALUES ($2, $3, $4, $5, $6, $7, $8)',
         [adminId, name, email, phone, position || null, department || null, qrData]
       );
     } catch (err) {
       // Fallback for older schema without position/department
       result = await db.execute(
-      'INSERT INTO employees (admin_id, name, email, phone, qr_code) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO employees (admin_id, name, email, phone, qr_code) VALUES ($9, $10, $11, $12, $13)',
       [adminId, name, email, phone, qrData]
     );
     }
@@ -81,7 +81,7 @@ router.post('/add', requireAuth, async (req, res) => {
     
     // Update the QR code in database with correct ID
     await db.execute(
-      'UPDATE employees SET qr_code = ? WHERE employee_id = ?',
+      'UPDATE employees SET qr_code = $14 WHERE employee_id = $15',
       [finalQrData, result.insertId]
     );
     
@@ -104,7 +104,7 @@ router.get('/list', requireAuth, async (req, res) => {
     
     // Fetch employees from database
     const employees = await db.query(
-      'SELECT * FROM employees WHERE admin_id = ? ORDER BY name',
+      'SELECT * FROM employees WHERE admin_id = $16 ORDER BY name',
       [adminId]
     );
     
@@ -156,13 +156,13 @@ router.get('/search', requireAuth, async (req, res) => {
     const employees = await db.query(
       `SELECT employee_id, name, email, phone 
        FROM employees 
-       WHERE admin_id = ? 
-         AND (name LIKE ? OR email LIKE ? OR employee_id LIKE ? OR phone LIKE ?)
+       WHERE admin_id = $17 
+         AND (name LIKE $18 OR email LIKE $19 OR employee_id LIKE $20 OR phone LIKE $21)
        ORDER BY 
          CASE 
-           WHEN name LIKE ? THEN 1
-           WHEN email LIKE ? THEN 2
-           WHEN employee_id LIKE ? THEN 3
+           WHEN name LIKE $22 THEN 1
+           WHEN email LIKE $23 THEN 2
+           WHEN employee_id LIKE $24 THEN 3
            ELSE 4
          END,
          name
@@ -190,7 +190,7 @@ router.get('/get/:id', requireAuth, async (req, res) => {
     
     // Fetch employee from database
     const employees = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $25 AND admin_id = $26',
       [id, adminId]
     );
     
@@ -221,7 +221,7 @@ router.post('/generate-qr/:id', requireAuth, async (req, res) => {
     
     // Fetch employee from database
     const employees = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $27 AND admin_id = $28',
       [id, adminId]
     );
     
@@ -258,7 +258,7 @@ router.post('/generate-qr/:id', requireAuth, async (req, res) => {
     
     // Update employee's QR code in database
     await db.execute(
-      'UPDATE employees SET qr_code = ? WHERE employee_id = ?',
+      'UPDATE employees SET qr_code = $29 WHERE employee_id = $30',
       [qrData, id]
     );
     
@@ -283,7 +283,7 @@ router.post('/regenerate-all-qr', requireAuth, async (req, res) => {
     
     // Get all employees for this admin
     const employees = await db.query(
-      'SELECT * FROM employees WHERE admin_id = ?',
+      'SELECT * FROM employees WHERE admin_id = $31',
       [adminId]
     );
     
@@ -308,7 +308,7 @@ router.post('/regenerate-all-qr', requireAuth, async (req, res) => {
         
         // Update employee's QR code in database
         await db.execute(
-          'UPDATE employees SET qr_code = ? WHERE employee_id = ?',
+          'UPDATE employees SET qr_code = $32 WHERE employee_id = $33',
           [qrData, employee.employee_id]
         );
         
@@ -343,7 +343,7 @@ router.post('/train-face', requireAuth, async (req, res) => {
     
     // Verify employee exists and belongs to admin
     const employees = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $34 AND admin_id = $35',
       [employee_id, adminId]
     );
     
@@ -359,7 +359,7 @@ router.post('/train-face', requireAuth, async (req, res) => {
       
       // Insert face training data
       await db.execute(
-        'INSERT INTO face_training (employee_id, face_descriptor, face_image, created_at) VALUES (?, ?, ?, NOW())',
+        'INSERT INTO face_training (employee_id, face_descriptor, face_image, created_at) VALUES ($36, $37, $38, NOW())',
         [employee_id, JSON.stringify(descriptor), image]
       );
     }
@@ -393,7 +393,7 @@ router.get('/face-database', requireAuth, async (req, res) => {
         e.email
       FROM face_training ft
       JOIN employees e ON ft.employee_id = e.employee_id
-      WHERE e.admin_id = ?
+      WHERE e.admin_id = $39
       ORDER BY ft.created_at DESC
     `, [adminId]);
     
@@ -422,7 +422,7 @@ router.get('/face-status/:employeeId', requireAuth, async (req, res) => {
     
     // Verify employee belongs to admin
     const employees = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $40 AND admin_id = $41',
       [employeeId, adminId]
     );
     
@@ -432,7 +432,7 @@ router.get('/face-status/:employeeId', requireAuth, async (req, res) => {
     
     // Get face training count
     const faceCount = await db.query(
-      'SELECT COUNT(*) as count FROM face_training WHERE employee_id = ?',
+      'SELECT COUNT(*) as count FROM face_training WHERE employee_id = $42',
       [employeeId]
     );
     
@@ -456,7 +456,7 @@ router.delete('/face-data/:employeeId', requireAuth, async (req, res) => {
     
     // Verify employee belongs to admin
     const employees = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $43 AND admin_id = $44',
       [employeeId, adminId]
     );
     
@@ -466,7 +466,7 @@ router.delete('/face-data/:employeeId', requireAuth, async (req, res) => {
     
     // Delete face training data
     await db.execute(
-      'DELETE FROM face_training WHERE employee_id = ?',
+      'DELETE FROM face_training WHERE employee_id = $45',
       [employeeId]
     );
     
@@ -491,7 +491,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
     // Verify employee belongs to admin
     const found = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ? LIMIT 1',
+      'SELECT * FROM employees WHERE employee_id = $46 AND admin_id = $47 LIMIT 1',
       [id, adminId]
     );
     if (found.length === 0) {
@@ -500,16 +500,16 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
     // Remove face training data (no FK constraints guaranteed)
     try {
-      await db.execute('DELETE FROM face_training WHERE employee_id = ?', [id]);
+      await db.execute('DELETE FROM face_training WHERE employee_id = $48', [id]);
     } catch (_) {}
 
     // Remove attendance (also covered by FK ON DELETE CASCADE if present)
     try {
-      await db.execute('DELETE FROM attendance WHERE employee_id = ?', [id]);
+      await db.execute('DELETE FROM attendance WHERE employee_id = $49', [id]);
     } catch (_) {}
 
     // Delete employee
-    await db.execute('DELETE FROM employees WHERE employee_id = ? AND admin_id = ?', [id, adminId]);
+    await db.execute('DELETE FROM employees WHERE employee_id = $50 AND admin_id = $51', [id, adminId]);
 
     res.json({ success: true, message: 'Employee deleted successfully', employee_id: Number(id) });
   } catch (error) {
@@ -526,7 +526,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     
     // Fetch employee from database
     const employees = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $52 AND admin_id = $53',
       [id, adminId]
     );
     
@@ -555,7 +555,7 @@ router.get('/face-descriptors', requireAuth, async (req, res) => {
         ft.quality_score
       FROM employees e
       LEFT JOIN face_training ft ON e.employee_id = ft.employee_id
-      WHERE e.admin_id = ? AND ft.face_data IS NOT NULL
+      WHERE e.admin_id = $54 AND ft.face_data IS NOT NULL
       ORDER BY e.name
     `, [adminId]);
     
@@ -595,7 +595,7 @@ router.post('/train-face', requireAuth, async (req, res) => {
     
     // Verify employee belongs to admin
     const employee = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $55 AND admin_id = $56',
       [employee_id, adminId]
     );
     
@@ -613,20 +613,20 @@ router.post('/train-face', requireAuth, async (req, res) => {
     
     // Save or update face training data
     const existingTraining = await db.query(
-      'SELECT * FROM face_training WHERE employee_id = ?',
+      'SELECT * FROM face_training WHERE employee_id = $57',
       [employee_id]
     );
     
     if (existingTraining.length > 0) {
       // Update existing training
       await db.execute(
-        'UPDATE face_training SET face_data = ?, quality_score = ?, updated_at = NOW() WHERE employee_id = ?',
+        'UPDATE face_training SET face_data = $58, quality_score = $59, updated_at = NOW() WHERE employee_id = $60',
         [JSON.stringify(processedFaceData), processedFaceData.quality_score, employee_id]
       );
     } else {
       // Insert new training
       await db.execute(
-        'INSERT INTO face_training (employee_id, face_data, quality_score, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())',
+        'INSERT INTO face_training (employee_id, face_data, quality_score, created_at, updated_at) VALUES ($61, $62, $63, NOW(), NOW())',
         [employee_id, JSON.stringify(processedFaceData), processedFaceData.quality_score]
       );
     }
@@ -654,7 +654,7 @@ router.post('/train-face', requireAuth, async (req, res) => {
     // Check if employee exists and belongs to admin
     const adminId = req.session.adminId;
     const employee = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND admin_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $64 AND admin_id = $65',
       [employee_id, adminId]
     );
     
@@ -665,7 +665,7 @@ router.post('/train-face', requireAuth, async (req, res) => {
     // Store face training data
     for (let i = 0; i < face_images.length; i++) {
       await db.execute(
-        'INSERT INTO face_training (employee_id, face_data, quality_score, created_at) VALUES (?, ?, ?, ?)',
+        'INSERT INTO face_training (employee_id, face_data, quality_score, created_at) VALUES ($66, $67, $68, $69)',
         [employee_id, face_images[i], 0.8, timestamp]
       );
     }
@@ -690,7 +690,7 @@ router.get('/face-descriptors', requireAuth, async (req, res) => {
       SELECT ft.employee_id, ft.face_data, ft.quality_score, e.name
       FROM face_training ft
       JOIN employees e ON ft.employee_id = e.employee_id
-      WHERE e.admin_id = ?
+      WHERE e.admin_id = $70
       ORDER BY ft.created_at DESC
     `, [adminId]);
     

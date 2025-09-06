@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const db = require('../db-postgres');
 
 const router = express.Router();
 
@@ -22,20 +22,20 @@ router.post('/mark', async (req, res) => {
     
     // Verify employee exists and get details
     const employees = await db.query(
-      'SELECT employee_id, name, email, phone FROM employees WHERE employee_id = ?',
+      'SELECT employee_id, name, email, phone FROM employees WHERE employee_id = $1',
       [employee_id]
     );
     
     if (employees.length === 0) {
       // Try to find similar employees for better error messages
       const similarEmployees = await db.query(
-        'SELECT employee_id, name, email FROM employees WHERE employee_id LIKE ? OR name LIKE ? OR email LIKE ? LIMIT 3',
+        'SELECT employee_id, name, email FROM employees WHERE employee_id LIKE $2 OR name LIKE $3 OR email LIKE $4 LIMIT 3',
         [`%${employee_id}%`, `%${employee_id}%`, `%${employee_id}%`]
       );
       
       let errorMessage = 'Employee not found';
       if (similarEmployees.length > 0) {
-        errorMessage += `. Did you mean: ${similarEmployees.map(emp => `${emp.name} (ID: ${emp.employee_id})`).join(', ')}?`;
+        errorMessage += `. Did you mean: ${similarEmployees.map(emp => `${emp.name} (ID: ${emp.employee_id})`).join(', ')}$5`;
       } else {
         errorMessage += '. Please check the employee ID or contact administrator.';
       }
@@ -62,7 +62,7 @@ router.post('/mark', async (req, res) => {
     // Check if attendance already marked for today
     const existingAttendance = await db.query(`
       SELECT * FROM attendance 
-      WHERE employee_id = ? AND DATE(timestamp) = CURDATE()
+      WHERE employee_id = $6 AND DATE(timestamp) = CURDATE()
     `, [employee_id]);
     
     if (existingAttendance.length > 0) {
@@ -76,7 +76,7 @@ router.post('/mark', async (req, res) => {
     
     // Insert attendance record
     const result = await db.execute(
-      'INSERT INTO attendance (employee_id, status, timestamp) VALUES (?, ?, ?)',
+      'INSERT INTO attendance (employee_id, status, timestamp) VALUES ($7, $8, $9)',
       [employee_id, status, now]
     );
     
@@ -110,7 +110,7 @@ router.put('/update/:employeeId', async (req, res) => {
     
     // Verify employee exists
     const employees = await db.query(
-      'SELECT * FROM employees WHERE employee_id = ?',
+      'SELECT * FROM employees WHERE employee_id = $10',
       [employeeId]
     );
     
@@ -123,7 +123,7 @@ router.put('/update/:employeeId', async (req, res) => {
     // Get today's attendance record
     const existingAttendance = await db.query(`
       SELECT * FROM attendance 
-      WHERE employee_id = ? AND DATE(timestamp) = CURDATE()
+      WHERE employee_id = $11 AND DATE(timestamp) = CURDATE()
       ORDER BY timestamp DESC
       LIMIT 1
     `, [employeeId]);
@@ -137,7 +137,7 @@ router.put('/update/:employeeId', async (req, res) => {
     
     // Update attendance record
     await db.execute(
-      'UPDATE attendance SET status = ?, updated_at = NOW() WHERE attendance_id = ?',
+      'UPDATE attendance SET status = $12, updated_at = NOW() WHERE attendance_id = $13',
       [status, existing.attendance_id]
     );
     
@@ -170,7 +170,7 @@ router.get('/stats/:employeeId', async (req, res) => {
         COUNT(CASE WHEN status = 'Late' THEN 1 END) as late_days,
         COUNT(CASE WHEN status = 'Absent' THEN 1 END) as absent_days
       FROM attendance 
-      WHERE employee_id = ?
+      WHERE employee_id = $14
     `, [employeeId]);
     
     res.json(stats[0]);
@@ -191,7 +191,7 @@ router.get('/export', requireAuth, async (req, res) => {
              a.status, a.timestamp
       FROM attendance a
       JOIN employees e ON e.employee_id = a.employee_id
-      WHERE e.admin_id = ?
+      WHERE e.admin_id = $15
       ORDER BY a.timestamp DESC
     `, [adminId]);
 
@@ -206,7 +206,7 @@ router.get('/export', requireAuth, async (req, res) => {
         (r.department||'').replace(/"/g,'""'),
         (r.position||'').replace(/"/g,'""'),
         r.status,
-        r.timestamp ? new Date(r.timestamp).toISOString() : ''
+        r.timestamp $16 new Date(r.timestamp).toISOString() : ''
       ].map(v => '"'+String(v)+'"').join(','))
     ).join('\n');
 

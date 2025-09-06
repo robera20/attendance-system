@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db');
+const db = require('../db-postgres');
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ router.post('/generate', requireAuth, async (req, res) => {
 
     // Get all employees for this admin
     const employees = await db.query(
-      'SELECT employee_id, name, email FROM employees WHERE admin_id = ?',
+      'SELECT employee_id, name, email FROM employees WHERE admin_id = $1',
       [adminId]
     );
 
@@ -42,7 +42,7 @@ router.post('/generate', requireAuth, async (req, res) => {
     }
 
     const employeeIds = employees.map(emp => emp.employee_id);
-    const placeholders = employeeIds.map(() => '?').join(',');
+    const placeholders = employeeIds.map(() => '$2').join(',');
 
     // Get attendance data for the date range
     const attendanceQuery = `
@@ -52,7 +52,7 @@ router.post('/generate', requireAuth, async (req, res) => {
         COUNT(*) as count
       FROM attendance 
       WHERE employee_id IN (${placeholders}) 
-        AND DATE(timestamp) BETWEEN ? AND ?
+        AND DATE(timestamp) BETWEEN $3 AND $4
       GROUP BY employee_id, status
     `;
 
@@ -118,7 +118,7 @@ router.get('/summary', requireAuth, async (req, res) => {
 
     // Get total employees
     const employeesResult = await db.query(
-      'SELECT COUNT(*) as count FROM employees WHERE admin_id = ?',
+      'SELECT COUNT(*) as count FROM employees WHERE admin_id = $5',
       [adminId]
     );
     const totalEmployees = employeesResult[0].count;
@@ -134,7 +134,7 @@ router.get('/summary', requireAuth, async (req, res) => {
 
     // Get today's attendance
     const todayAttendance = await db.query(
-      'SELECT status, COUNT(*) as count FROM attendance a JOIN employees e ON a.employee_id = e.employee_id WHERE e.admin_id = ? AND DATE(a.timestamp) = ? GROUP BY status',
+      'SELECT status, COUNT(*) as count FROM attendance a JOIN employees e ON a.employee_id = e.employee_id WHERE e.admin_id = $6 AND DATE(a.timestamp) = $7 GROUP BY status',
       [adminId, today]
     );
 
