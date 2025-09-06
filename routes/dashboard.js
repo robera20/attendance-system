@@ -50,7 +50,7 @@ router.get('/summary', requireAuth, async (req, res) => {
     // Calculate growth rates
     const totalEmployees = currentStats[0].totalEmployees || 0;
     const newToday = currentStats[0].newToday || 0;
-    const employeeGrowth = totalEmployees > 0 $1 Math.round((newToday / totalEmployees) * 100) : 0;
+    const employeeGrowth = totalEmployees > 0 ? Math.round((newToday / totalEmployees) * 100) : 0;
     
     const presentToday = todayAttendance[0].presentToday || 0;
     const lateToday = todayAttendance[0].lateToday || 0;
@@ -60,9 +60,9 @@ router.get('/summary', requireAuth, async (req, res) => {
     const lateYesterday = yesterdayAttendance[0].lateYesterday || 0;
     const absentYesterday = yesterdayAttendance[0].absentYesterday || 0;
     
-    const presentRate = presentYesterday > 0 $2 Math.round(((presentToday - presentYesterday) / presentYesterday) * 100) : 0;
-    const lateRate = lateYesterday > 0 $3 Math.round(((lateToday - lateYesterday) / lateYesterday) * 100) : 0;
-    const absentRate = absentYesterday > 0 $4 Math.round(((absentToday - absentYesterday) / absentYesterday) * 100) : 0;
+    const presentRate = presentYesterday > 0 ? Math.round(((presentToday - presentYesterday) / presentYesterday) * 100) : 0;
+    const lateRate = lateYesterday > 0 ? Math.round(((lateToday - lateYesterday) / lateYesterday) * 100) : 0;
+    const absentRate = absentYesterday > 0 ? Math.round(((absentToday - absentYesterday) / absentYesterday) * 100) : 0;
     
     res.json({
       totalEmployees,
@@ -188,9 +188,9 @@ router.get('/attendance-trend', requireAuth, async (req, res) => {
       labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
       
       const dayData = trendData.find(d => d.date.toISOString().split('T')[0] === dateStr);
-      present.push(dayData $5 dayData.present : 0);
-      late.push(dayData $6 dayData.late : 0);
-      absent.push(dayData $7 dayData.absent : 0);
+      present.push(dayData ? dayData.present : 0);
+      late.push(dayData ? dayData.late : 0);
+      absent.push(dayData ? dayData.absent : 0);
     }
     
     res.json({ labels, present, late, absent });
