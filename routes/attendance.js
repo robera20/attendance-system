@@ -180,8 +180,6 @@ router.get('/stats/:employeeId', async (req, res) => {
   }
 });
 
-module.exports = router;
- 
 // Export attendance CSV for current admin
 router.get('/export', requireAuth, async (req, res) => {
   try {
@@ -206,7 +204,7 @@ router.get('/export', requireAuth, async (req, res) => {
         (r.department||'').replace(/"/g,'""'),
         (r.position||'').replace(/"/g,'""'),
         r.status,
-        r.timestamp $1 new Date(r.timestamp).toISOString() : ''
+        r.timestamp ? new Date(r.timestamp).toISOString() : ''
       ].map(v => '"'+String(v)+'"').join(','))
     ).join('\n');
 
@@ -218,3 +216,5 @@ router.get('/export', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to export attendance' });
   }
 });
+
+module.exports = router;
