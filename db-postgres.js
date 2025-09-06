@@ -1,5 +1,11 @@
 const { Pool } = require('pg');
 
+// Debug environment variables
+console.log('🔍 Environment variables:');
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+console.log('DB_HOST:', process.env.DB_HOST || 'NOT SET');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'NOT SET');
+
 // Database configuration for Supabase PostgreSQL
 const dbConfig = process.env.DATABASE_URL ? {
   connectionString: process.env.DATABASE_URL,
@@ -12,6 +18,8 @@ const dbConfig = process.env.DATABASE_URL ? {
   database: process.env.DB_NAME || 'postgres',
   ssl: { rejectUnauthorized: false }
 };
+
+console.log('🔧 Using config:', process.env.DATABASE_URL ? 'DATABASE_URL' : 'Individual variables');
 
 // Create connection pool
 const pool = new Pool(dbConfig);
