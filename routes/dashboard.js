@@ -48,21 +48,21 @@ router.get('/summary', requireAuth, async (req, res) => {
     `, [adminId]);
     
     // Calculate growth rates
-    const totalEmployees = currentStats[0]$4.totalEmployees || 0;
-    const newToday = currentStats[0]$5.newToday || 0;
-    const employeeGrowth = totalEmployees > 0 $6 Math.round((newToday / totalEmployees) * 100) : 0;
+    const totalEmployees = currentStats[0].totalEmployees || 0;
+    const newToday = currentStats[0].newToday || 0;
+    const employeeGrowth = totalEmployees > 0 ? Math.round((newToday / totalEmployees) * 100) : 0;
     
-    const presentToday = todayAttendance[0]$7.presentToday || 0;
-    const lateToday = todayAttendance[0]$8.lateToday || 0;
-    const absentToday = todayAttendance[0]$9.absentToday || 0;
+    const presentToday = todayAttendance[0].presentToday || 0;
+    const lateToday = todayAttendance[0].lateToday || 0;
+    const absentToday = todayAttendance[0].absentToday || 0;
     
-    const presentYesterday = yesterdayAttendance[0]$10.presentYesterday || 0;
-    const lateYesterday = yesterdayAttendance[0]$11.lateYesterday || 0;
-    const absentYesterday = yesterdayAttendance[0]$12.absentYesterday || 0;
+    const presentYesterday = yesterdayAttendance[0].presentYesterday || 0;
+    const lateYesterday = yesterdayAttendance[0].lateYesterday || 0;
+    const absentYesterday = yesterdayAttendance[0].absentYesterday || 0;
     
-    const presentRate = presentYesterday > 0 $13 Math.round(((presentToday - presentYesterday) / presentYesterday) * 100) : 0;
-    const lateRate = lateYesterday > 0 $14 Math.round(((lateToday - lateYesterday) / lateYesterday) * 100) : 0;
-    const absentRate = absentYesterday > 0 $15 Math.round(((absentToday - absentYesterday) / absentYesterday) * 100) : 0;
+    const presentRate = presentYesterday > 0 ? Math.round(((presentToday - presentYesterday) / presentYesterday) * 100) : 0;
+    const lateRate = lateYesterday > 0 ? Math.round(((lateToday - lateYesterday) / lateYesterday) * 100) : 0;
+    const absentRate = absentYesterday > 0 ? Math.round(((absentToday - absentYesterday) / absentYesterday) * 100) : 0;
     
     res.json({
       totalEmployees,
@@ -188,9 +188,9 @@ router.get('/attendance-trend', requireAuth, async (req, res) => {
       labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
       
       const dayData = trendData.find(d => d.date.toISOString().split('T')[0] === dateStr);
-      present.push(dayData $21 dayData.present : 0);
-      late.push(dayData $22 dayData.late : 0);
-      absent.push(dayData $23 dayData.absent : 0);
+      present.push(dayData ? dayData.present : 0);
+      late.push(dayData ? dayData.late : 0);
+      absent.push(dayData ? dayData.absent : 0);
     }
     
     res.json({ labels, present, late, absent });
@@ -217,9 +217,9 @@ router.get('/department-performance', requireAuth, async (req, res) => {
       WHERE e.admin_id = $24 AND DATE(a.timestamp) = CURDATE()
     `, [adminId]);
     
-    const present = todayStats[0]$25.present || 0;
-    const late = todayStats[0]$26.late || 0;
-    const absent = todayStats[0]$27.absent || 0;
+    const present = todayStats[0].present || 0;
+    const late = todayStats[0].late || 0;
+    const absent = todayStats[0].absent || 0;
     
     res.json({ present, late, absent });
     

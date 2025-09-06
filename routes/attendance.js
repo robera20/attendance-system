@@ -206,7 +206,7 @@ router.get('/export', requireAuth, async (req, res) => {
         (r.department||'').replace(/"/g,'""'),
         (r.position||'').replace(/"/g,'""'),
         r.status,
-        r.timestamp $16 new Date(r.timestamp).toISOString() : ''
+        r.timestamp ? new Date(r.timestamp).toISOString() : ''
       ].map(v => '"'+String(v)+'"').join(','))
     ).join('\n');
 

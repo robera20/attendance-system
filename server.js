@@ -25,7 +25,7 @@ app.use(express.static('Frontend'));
 // Serve project images directory at /images
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(session({
-    secret: 'your-secret-key',
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {
