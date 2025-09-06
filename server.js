@@ -4,7 +4,7 @@ const session = require('express-session');
 const path = require('path');
 
 // Import database connection
-const db = require('./db');
+const db = require('./db-postgres');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -181,14 +181,15 @@ app.get('/test-db', async (req, res) => {
     const result = await db.query('SELECT 1 as test');
     res.json({ 
       status: 'success', 
-      message: 'Database connection working',
-      test: result[0].test 
+      message: 'PostgreSQL database connection working',
+      test: result[0].test,
+      database: 'Supabase PostgreSQL'
     });
   } catch (error) {
     console.error('Database test error:', error);
     res.status(500).json({ 
       status: 'error', 
-      message: 'Database connection failed',
+      message: 'PostgreSQL database connection failed',
       error: error.message 
     });
   }
