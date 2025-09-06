@@ -1,5 +1,25 @@
 const bcrypt = require('bcryptjs');
-const db = require('./db-postgres');
+const { Pool } = require('pg');
+
+// Use the same hardcoded connection string as in db-postgres.js
+const correctConnectionString = 'postgresql://postgres.awniziviitomnkfhaxpq:Qwe%40%23%2445cr25@aws-1-eu-north-1.pooler.supabase.com:6543/postgres';
+
+const pool = new Pool({
+  connectionString: correctConnectionString,
+  ssl: { rejectUnauthorized: false }
+});
+
+// Create db object with the same methods
+const db = {
+  query: async (sql, params) => {
+    const result = await pool.query(sql, params);
+    return result.rows;
+  },
+  execute: async (sql, params) => {
+    const result = await pool.query(sql, params);
+    return result.rows;
+  }
+};
 
 async function createAdminAccount() {
   try {
