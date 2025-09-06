@@ -4,12 +4,44 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "Frontend/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "server.js"
+    },
+    {
+      "src": "/auth/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/employee/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/dashboard/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/attendance/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/reports/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/test-db",
+      "dest": "server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "Frontend/$1"
     }
   ],
   "env": {
