@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 // Debug environment variables
 console.log('🔍 Environment variables:');
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+console.log('DATABASE_URL value:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'NOT SET');
 console.log('DB_HOST:', process.env.DB_HOST || 'NOT SET');
 console.log('NODE_ENV:', process.env.NODE_ENV || 'NOT SET');
 
@@ -20,6 +21,7 @@ const dbConfig = process.env.DATABASE_URL ? {
 };
 
 console.log('🔧 Using config:', process.env.DATABASE_URL ? 'DATABASE_URL' : 'Individual variables');
+console.log('🔧 Final dbConfig:', JSON.stringify(dbConfig, null, 2));
 
 // Create connection pool
 const pool = new Pool(dbConfig);
