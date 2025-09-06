@@ -1,6 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const db = require('../db');
+const db = require('../db-postgres');
 
 const router = express.Router();
 
@@ -15,13 +15,13 @@ router.post('/signup', async (req, res) => {
     }
     
     // Check if username already exists
-    const existingUsers = await db.query('SELECT username FROM admins WHERE username = ?', [username]);
+    const existingUsers = await db.query('SELECT username FROM admins WHERE username = $1', [username]);
     if (existingUsers.length > 0) {
       return res.status(400).json({ error: 'Username already exists' });
     }
     
     // Check if email already exists
-    const existingEmails = await db.query('SELECT email FROM admins WHERE email = ?', [email]);
+    const existingEmails = await db.query('SELECT email FROM admins WHERE email = $1', [email]);
     if (existingEmails.length > 0) {
       return res.status(400).json({ error: 'Email already exists' });
     }
@@ -34,7 +34,7 @@ router.post('/signup', async (req, res) => {
     
     // Insert admin into database
     const result = await db.execute(
-      'INSERT INTO admins (name, email, phone, organization, username, password, security_question, security_answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO admins (name, email, phone, organization, username, password, security_question, security_answer) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
       [name, email, phone, organization, username, hashedPassword, security_question, hashedSecurityAnswer]
     );
     
@@ -67,7 +67,7 @@ router.post('/signin', async (req, res) => {
     const { username, password } = req.body;
     
     // Find admin by username
-    const admins = await db.query('SELECT * FROM admins WHERE username = ?', [username]);
+    const admins = await db.query('SELECT * FROM admins WHERE username = $1', [username]);
     
     // Check if admin exists and verify password
     if (admins.length === 0) {
@@ -134,7 +134,7 @@ router.get('/profile', async (req, res) => {
     }
 
     const admins = await db.query(
-      'SELECT admin_id, name, email, phone, organization, username, created_at, updated_at FROM admins WHERE admin_id = ?',
+      'SELECT admin_id, name, email, phone, organization, username, created_at, updated_at FROM admins WHERE admin_id = $1',
       [req.session.adminId]
     );
 
@@ -164,7 +164,7 @@ router.put('/profile', async (req, res) => {
 
     // Ensure email is unique among other admins
     const emailExists = await db.query(
-      'SELECT admin_id FROM admins WHERE email = ? AND admin_id != ?',
+      'SELECT admin_id FROM admins WHERE email = $1 AND admin_id != $2',
       [email, req.session.adminId]
     );
     if (emailExists.length > 0) {
@@ -173,7 +173,7 @@ router.put('/profile', async (req, res) => {
 
     // Ensure username is unique among other admins
     const usernameExists = await db.query(
-      'SELECT admin_id FROM admins WHERE username = ? AND admin_id != ?',
+      'SELECT admin_id FROM admins WHERE username = $1 AND admin_id != $2',
       [username, req.session.adminId]
     );
     if (usernameExists.length > 0) {
@@ -182,7 +182,7 @@ router.put('/profile', async (req, res) => {
 
     // Update admin
     await db.execute(
-      'UPDATE admins SET name = ?, email = ?, phone = ?, organization = ?, username = ? WHERE admin_id = ?',
+      'UPDATE admins SET name = $1, email = $2, phone = $3, organization = $4, username = $5 WHERE admin_id = $6',
       [name, email, phone || null, organization || null, username, req.session.adminId]
     );
 
@@ -212,7 +212,7 @@ router.put('/password', async (req, res) => {
       return res.status(400).json({ error: 'New password must be at least 6 characters' });
     }
 
-    const admins = await db.query('SELECT password FROM admins WHERE admin_id = ?', [req.session.adminId]);
+    const admins = await db.query('SELECT password FROM admins WHERE admin_id = $1', [req.session.adminId]);
     if (admins.length === 0) {
       return res.status(404).json({ error: 'Admin not found' });
     }
@@ -223,7 +223,7 @@ router.put('/password', async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(new_password, 10);
-    await db.execute('UPDATE admins SET password = ? WHERE admin_id = ?', [hashed, req.session.adminId]);
+    await db.execute('UPDATE admins SET password = $1 WHERE admin_id = $2', [hashed, req.session.adminId]);
 
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
