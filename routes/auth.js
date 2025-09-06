@@ -64,6 +64,7 @@ router.post('/signup', async (req, res) => {
 // Admin Signin
 router.post('/signin', async (req, res) => {
   try {
+    console.log('🔐 Signin attempt:', { username: req.body.username, hasPassword: !!req.body.password });
     const { username, password } = req.body;
     
     // Find admin by username
@@ -84,6 +85,7 @@ router.post('/signin', async (req, res) => {
     // Set session
     req.session.adminId = admin.admin_id;
     
+    console.log('✅ Signin successful for admin:', admin.username);
     res.json({ message: 'Signin successful' });
   } catch (error) {
     console.error('Signin error:', error);
