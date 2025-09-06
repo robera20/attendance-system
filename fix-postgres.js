@@ -13,10 +13,17 @@ function convertMySQLToPostgreSQL(content) {
   // Convert ? placeholders to $1, $2, etc.
   let placeholderCount = 0;
   
-  return content.replace(/\?/g, () => {
+  content = content.replace(/\?/g, () => {
     placeholderCount++;
     return `$${placeholderCount}`;
   });
+  
+  // Convert MySQL functions to PostgreSQL equivalents
+  content = content.replace(/CURDATE\(\)/g, 'CURRENT_DATE');
+  content = content.replace(/NOW\(\)/g, 'CURRENT_TIMESTAMP');
+  content = content.replace(/DATE_SUB\(([^,]+),\s*INTERVAL\s+([^)]+)\)/g, '$1 - INTERVAL \'$2\'');
+  
+  return content;
 }
 
 files.forEach(file => {

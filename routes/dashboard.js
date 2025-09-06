@@ -19,7 +19,7 @@ router.get('/summary', requireAuth, async (req, res) => {
     const currentStats = await db.query(`
       SELECT 
         COUNT(*) as totalEmployees,
-        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as newToday
+        SUM(CASE WHEN DATE(created_at) = CURRENT_DATE THEN 1 ELSE 0 END) as newToday
       FROM employees 
       WHERE admin_id = $1
     `, [adminId]);
@@ -32,7 +32,7 @@ router.get('/summary', requireAuth, async (req, res) => {
         SUM(CASE WHEN a.status = 'Late' THEN 1 ELSE 0 END) as lateToday,
         SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) as absentToday
       FROM employees e
-      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND DATE(a.timestamp) = CURDATE()
+      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND DATE(a.timestamp) = CURRENT_DATE
       WHERE e.admin_id = $2
     `, [adminId]);
     
@@ -43,14 +43,14 @@ router.get('/summary', requireAuth, async (req, res) => {
         SUM(CASE WHEN a.status = 'Late' THEN 1 ELSE 0 END) as lateYesterday,
         SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) as absentYesterday
       FROM employees e
-      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND DATE(a.timestamp) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND DATE(a.timestamp) = CURRENT_DATE - INTERVAL '1 day'
       WHERE e.admin_id = $3
     `, [adminId]);
     
     // Calculate growth rates
     const totalEmployees = currentStats[0].totalEmployees || 0;
     const newToday = currentStats[0].newToday || 0;
-    const employeeGrowth = totalEmployees > 0 ? Math.round((newToday / totalEmployees) * 100) : 0;
+    const employeeGrowth = totalEmployees > 0 $1 Math.round((newToday / totalEmployees) * 100) : 0;
     
     const presentToday = todayAttendance[0].presentToday || 0;
     const lateToday = todayAttendance[0].lateToday || 0;
@@ -60,9 +60,9 @@ router.get('/summary', requireAuth, async (req, res) => {
     const lateYesterday = yesterdayAttendance[0].lateYesterday || 0;
     const absentYesterday = yesterdayAttendance[0].absentYesterday || 0;
     
-    const presentRate = presentYesterday > 0 ? Math.round(((presentToday - presentYesterday) / presentYesterday) * 100) : 0;
-    const lateRate = lateYesterday > 0 ? Math.round(((lateToday - lateYesterday) / lateYesterday) * 100) : 0;
-    const absentRate = absentYesterday > 0 ? Math.round(((absentToday - absentYesterday) / absentYesterday) * 100) : 0;
+    const presentRate = presentYesterday > 0 $2 Math.round(((presentToday - presentYesterday) / presentYesterday) * 100) : 0;
+    const lateRate = lateYesterday > 0 $3 Math.round(((lateToday - lateYesterday) / lateYesterday) * 100) : 0;
+    const absentRate = absentYesterday > 0 $4 Math.round(((absentToday - absentYesterday) / absentYesterday) * 100) : 0;
     
     res.json({
       totalEmployees,
@@ -97,7 +97,7 @@ router.get('/employee-status', requireAuth, async (req, res) => {
         a.timestamp,
         a.attendance_id
       FROM employees e
-      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND DATE(a.timestamp) = CURDATE()
+      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND DATE(a.timestamp) = CURRENT_DATE
       WHERE e.admin_id = $16
       ORDER BY e.name
     `, [adminId]);
@@ -124,7 +124,7 @@ router.get('/recent-activity', requireAuth, async (req, res) => {
         e.employee_id
       FROM attendance a
       JOIN employees e ON a.employee_id = e.employee_id
-      WHERE e.admin_id = $17 AND a.timestamp >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+      WHERE e.admin_id = $17 AND a.timestamp >= CURRENT_TIMESTAMP - INTERVAL '7 days'
       ORDER BY a.timestamp DESC
       LIMIT 10
     `, [adminId]);
@@ -137,7 +137,7 @@ router.get('/recent-activity', requireAuth, async (req, res) => {
         created_at as timestamp,
         employee_id
       FROM employees
-      WHERE admin_id = $18 AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+      WHERE admin_id = $18 AND created_at >= CURRENT_TIMESTAMP - INTERVAL '7 days'
       ORDER BY created_at DESC
       LIMIT 5
     `, [adminId]);
@@ -169,7 +169,7 @@ router.get('/attendance-trend', requireAuth, async (req, res) => {
         SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) as absent
       FROM attendance a
       JOIN employees e ON a.employee_id = e.employee_id
-      WHERE e.admin_id = $19 AND a.timestamp >= DATE_SUB(CURDATE(), INTERVAL $20 DAY)
+      WHERE e.admin_id = $19 AND a.timestamp >= CURRENT_DATE - INTERVAL '$20 days'
       GROUP BY DATE(a.timestamp)
       ORDER BY date
     `, [adminId, days]);
@@ -188,9 +188,9 @@ router.get('/attendance-trend', requireAuth, async (req, res) => {
       labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
       
       const dayData = trendData.find(d => d.date.toISOString().split('T')[0] === dateStr);
-      present.push(dayData ? dayData.present : 0);
-      late.push(dayData ? dayData.late : 0);
-      absent.push(dayData ? dayData.absent : 0);
+      present.push(dayData $5 dayData.present : 0);
+      late.push(dayData $6 dayData.late : 0);
+      absent.push(dayData $7 dayData.absent : 0);
     }
     
     res.json({ labels, present, late, absent });
@@ -214,7 +214,7 @@ router.get('/department-performance', requireAuth, async (req, res) => {
         SUM(CASE WHEN a.status = 'Absent' THEN 1 ELSE 0 END) as absent
       FROM attendance a
       JOIN employees e ON a.employee_id = e.employee_id
-      WHERE e.admin_id = $24 AND DATE(a.timestamp) = CURDATE()
+      WHERE e.admin_id = $24 AND DATE(a.timestamp) = CURRENT_DATE
     `, [adminId]);
     
     const present = todayStats[0].present || 0;

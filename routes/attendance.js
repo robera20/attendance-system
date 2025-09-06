@@ -62,7 +62,7 @@ router.post('/mark', async (req, res) => {
     // Check if attendance already marked for today
     const existingAttendance = await db.query(`
       SELECT * FROM attendance 
-      WHERE employee_id = $6 AND DATE(timestamp) = CURDATE()
+      WHERE employee_id = $6 AND DATE(timestamp) = CURRENT_DATE
     `, [employee_id]);
     
     if (existingAttendance.length > 0) {
@@ -123,7 +123,7 @@ router.put('/update/:employeeId', async (req, res) => {
     // Get today's attendance record
     const existingAttendance = await db.query(`
       SELECT * FROM attendance 
-      WHERE employee_id = $11 AND DATE(timestamp) = CURDATE()
+      WHERE employee_id = $11 AND DATE(timestamp) = CURRENT_DATE
       ORDER BY timestamp DESC
       LIMIT 1
     `, [employeeId]);
@@ -137,7 +137,7 @@ router.put('/update/:employeeId', async (req, res) => {
     
     // Update attendance record
     await db.execute(
-      'UPDATE attendance SET status = $12, updated_at = NOW() WHERE attendance_id = $13',
+      'UPDATE attendance SET status = $12, updated_at = CURRENT_TIMESTAMP WHERE attendance_id = $13',
       [status, existing.attendance_id]
     );
     
@@ -206,7 +206,7 @@ router.get('/export', requireAuth, async (req, res) => {
         (r.department||'').replace(/"/g,'""'),
         (r.position||'').replace(/"/g,'""'),
         r.status,
-        r.timestamp ? new Date(r.timestamp).toISOString() : ''
+        r.timestamp $1 new Date(r.timestamp).toISOString() : ''
       ].map(v => '"'+String(v)+'"').join(','))
     ).join('\n');
 

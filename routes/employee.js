@@ -359,7 +359,7 @@ router.post('/train-face', requireAuth, async (req, res) => {
       
       // Insert face training data
       await db.execute(
-        'INSERT INTO face_training (employee_id, face_descriptor, face_image, created_at) VALUES ($36, $37, $38, NOW())',
+        'INSERT INTO face_training (employee_id, face_descriptor, face_image, created_at) VALUES ($36, $37, $38, CURRENT_TIMESTAMP)',
         [employee_id, JSON.stringify(descriptor), image]
       );
     }
@@ -620,13 +620,13 @@ router.post('/train-face', requireAuth, async (req, res) => {
     if (existingTraining.length > 0) {
       // Update existing training
       await db.execute(
-        'UPDATE face_training SET face_data = $58, quality_score = $59, updated_at = NOW() WHERE employee_id = $60',
+        'UPDATE face_training SET face_data = $58, quality_score = $59, updated_at = CURRENT_TIMESTAMP WHERE employee_id = $60',
         [JSON.stringify(processedFaceData), processedFaceData.quality_score, employee_id]
       );
     } else {
       // Insert new training
       await db.execute(
-        'INSERT INTO face_training (employee_id, face_data, quality_score, created_at, updated_at) VALUES ($61, $62, $63, NOW(), NOW())',
+        'INSERT INTO face_training (employee_id, face_data, quality_score, created_at, updated_at) VALUES ($61, $62, $63, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
         [employee_id, JSON.stringify(processedFaceData), processedFaceData.quality_score]
       );
     }
