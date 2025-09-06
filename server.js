@@ -22,6 +22,14 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(express.static('Frontend'));
+
+// Debug middleware for static files
+app.use((req, res, next) => {
+  if (req.url.includes('.css') || req.url.includes('.js') || req.url.includes('.html')) {
+    console.log('📁 Static file request:', req.url);
+  }
+  next();
+});
 // Serve project images directory at /images
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(session({
