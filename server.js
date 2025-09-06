@@ -207,6 +207,17 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// Debug route for login issues
+app.get('/debug-login', (req, res) => {
+  res.json({
+    session: req.session,
+    sessionId: req.sessionID,
+    cookies: req.headers.cookie,
+    userAgent: req.headers['user-agent'],
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Catch-all handler for SPA
 app.get('*', (req, res) => {
   // If it's an API route, return 404

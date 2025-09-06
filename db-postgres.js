@@ -8,15 +8,12 @@ console.log('DB_HOST:', process.env.DB_HOST || 'NOT SET');
 console.log('NODE_ENV:', process.env.NODE_ENV || 'NOT SET');
 
 // Database configuration for Supabase PostgreSQL
+// Temporary hardcoded connection for Vercel deployment
 const dbConfig = process.env.DATABASE_URL ? {
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 } : {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'postgres',
+  connectionString: 'postgresql://postgres.awniziviitomnkfhaxpq:5TmD4ZdgvS26NLH%40%23%24@aws-1-eu-north-1.pooler.supabase.com:6543/postgres',
   ssl: { rejectUnauthorized: false }
 };
 

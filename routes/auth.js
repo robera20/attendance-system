@@ -44,7 +44,7 @@ router.post('/signup', async (req, res) => {
     
     // Check if it's a database connection error
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      return res.status(500).json({ error: 'Database connection failed. Please check if MySQL is running.' });
+      return res.status(500).json({ error: 'Database connection failed. Please check if PostgreSQL is running.' });
     }
     
     // Check if it's a database not found error
@@ -86,13 +86,23 @@ router.post('/signin', async (req, res) => {
     req.session.adminId = admin.admin_id;
     
     console.log('✅ Signin successful for admin:', admin.username);
-    res.json({ message: 'Signin successful' });
+    console.log('🔍 Session after login:', {
+      adminId: req.session.adminId,
+      sessionId: req.sessionID,
+      session: req.session
+    });
+    
+    res.json({ 
+      message: 'Signin successful',
+      sessionId: req.sessionID,
+      adminId: admin.admin_id
+    });
   } catch (error) {
     console.error('Signin error:', error);
     
     // Check if it's a database connection error
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      return res.status(500).json({ error: 'Database connection failed. Please check if MySQL is running.' });
+      return res.status(500).json({ error: 'Database connection failed. Please check if PostgreSQL is running.' });
     }
     
     // Check if it's a database not found error
