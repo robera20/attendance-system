@@ -8,7 +8,7 @@ console.log('DB_HOST:', process.env.DB_HOST || 'NOT SET');
 console.log('NODE_ENV:', process.env.NODE_ENV || 'NOT SET');
 
 // TEMPORARY FIX: Hardcode the correct connection string
-const correctConnectionString = 'postgresql://postgres.awniziviitomnkfhaxpq:Qwe@#$45cr25@aws-1-eu-north-1.pooler.supabase.com:6543/postgres';
+const correctConnectionString = 'postgresql://postgres.awniziviitomnkfhaxpq:Qwe%40%23%2445cr25@aws-1-eu-north-1.pooler.supabase.com:6543/postgres';
 
 // Database configuration for Supabase PostgreSQL
 const dbConfig = {
