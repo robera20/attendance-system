@@ -35,7 +35,7 @@ router.post('/mark', async (req, res) => {
       
       let errorMessage = 'Employee not found';
       if (similarEmployees.length > 0) {
-        errorMessage += `. Did you mean: ${similarEmployees.map(emp => `${emp.name} (ID: ${emp.employee_id})`).join(', ')}$5`;
+        errorMessage += `. Did you mean: ${similarEmployees.map(emp => `${emp.name} (ID: ${emp.employee_id})`).join(', ')}`;
       } else {
         errorMessage += '. Please check the employee ID or contact administrator.';
       }

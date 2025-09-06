@@ -17,7 +17,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 // Body parsing middleware with increased limits for face training
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
@@ -39,7 +42,8 @@ app.use(session({
     cookie: {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        sameSite: 'strict'
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production'
     }
 }));
 
@@ -199,6 +203,34 @@ app.get('/test-db', async (req, res) => {
       status: 'error', 
       message: 'PostgreSQL database connection failed',
       error: error.message 
+    });
+  }
+});
+
+// Catch-all handler for SPA
+app.get('*', (req, res) => {
+  // If it's an API route, return 404
+  if (req.path.startsWith('/api/') || req.path.startsWith('/auth/') || 
+      req.path.startsWith('/employee/') || req.path.startsWith('/dashboard/') || 
+      req.path.startsWith('/attendance/') || req.path.startsWith('/reports/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  // For all other routes, serve the appropriate HTML file
+  if (req.path === '/' || req.path === '/index.html') {
+    res.sendFile(path.join(__dirname, 'Frontend', 'html', 'index.html'));
+  } else if (req.path === '/signin.html') {
+    res.sendFile(path.join(__dirname, 'Frontend', 'html', 'signin.html'));
+  } else if (req.path === '/signup.html') {
+    res.sendFile(path.join(__dirname, 'Frontend', 'html', 'signup.html'));
+  } else if (req.path === '/dashboard.html') {
+    res.sendFile(path.join(__dirname, 'Frontend', 'html', 'dashboard.html'));
+  } else {
+    // Try to serve the file from Frontend directory
+    res.sendFile(path.join(__dirname, 'Frontend', req.path), (err) => {
+      if (err) {
+        res.status(404).send('File not found');
+      }
     });
   }
 });
